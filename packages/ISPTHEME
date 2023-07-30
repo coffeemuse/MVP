@@ -237,7 +237,7 @@ $ 9 $Dialog Test - Specify Dialog Test option
  ] TYPE(OUTPUT) INTENS(HIGH) JUST(LEFT)
  [ TYPE(OUTPUT) INTENS(HIGH) JUST(RIGHT)
 )BODY WIDTH(&ZSCREENW) EXPAND(//)
-}                     Wally ISPF Primary Option Menu
+}                        ISPF Primary Option Menu
 +
 + Option ===>_ZCMD
 +                                                     
