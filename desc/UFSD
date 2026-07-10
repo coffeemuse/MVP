@@ -1,0 +1,36 @@
+Package: UFSD
+Version: 1.0.0
+Maintainer: Soldier of FORTRAN <mainframed767@gmail.com>
+Depends: MINIZIP
+Homepage: https://github.com/mvslovers/ufsd
+Description: MVS 3.8J Virtual Filesystem Daemon
+
+This is mvslovers/ufsd: a cross-address-space filesystem server (STC/
+subsystem) for MVS 3.8j. UFSD owns all BDAM disk I/O for UFS370
+(Unix V7-style) filesystems and serves clients -- HTTPD, FTPD, batch,
+TSO -- through the MVS subsystem interface (IEFSSREQ), presenting the
+mounted disks as one unified directory tree.
+
+This package installs in two jobs. #001JCL puts the UFSD, UFSDSSIR and
+UFSDCLNP load modules into SYS2.LINKLIB, the STC procedures into
+SYS2.PROCLIB(UFSD) and SYS2.PROCLIB(UFSDCLNP), and the default
+configuration into SYS2.PARMLIB(UFSDPRM0). #002JCL restores six
+freshly-formatted UFS370 disk datasets (RECFM=U, 4096-byte blocks)
+referenced by that configuration:
+
+  UFSD.ROOT        1M  /           root filesystem
+  HTTPD.WEBROOT   10M  /www        read-only web content
+  IBMUSER.UFSHOME  5M  /u/ibmuser  home, writable by IBMUSER
+  MVSCE01.UFSHOME  5M  /u/mvsce01  home, writable by MVSCE01
+  MVSCE02.UFSHOME  5M  /u/mvsce02  home, writable by MVSCE02
+  UFSD.SCRATCH     5M  /tmp        shared scratch, any user
+
+The disk datasets are allocated DISP=(NEW,CATLG): if one already
+exists, that step fails with a JCL error rather than overwriting your
+data. To reinstall an image, delete the dataset first and rerun.
+
+To start the server run '/S UFSD' on the Hercules console; stop with
+'/P UFSD'. Console commands: '/F UFSD,STATS|MOUNT LIST|HELP|SHUTDOWN'.
+Mounts are configured in SYS2.PARMLIB(UFSDPRM0). If UFSD abends and
+will not restart, run '/S UFSDCLNP' to clean up the SSCT and CSA, then
+start UFSD again.
