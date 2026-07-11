@@ -206,7 +206,7 @@ submit_xmi = '''//{:8} JOB (TSO),
 //             'MVP INSTALL',
 //             CLASS=A,
 //             MSGCLASS=A,
-//             MSGLEVEL=(1,1),USER={},PASSWORD={}
+//             MSGLEVEL=(1,1),TIME=1440,USER={},PASSWORD={}
 //* CLEAN UP
 //CLEANUP EXEC PGM=IDCAMS
 //SYSIN    DD *
@@ -237,7 +237,7 @@ submit_zip = '''//{:8} JOB (TSO),
 //             'MVP INSTALL',
 //             CLASS=A,REGION=0M,
 //             MSGCLASS=A,
-//             MSGLEVEL=(1,1),USER={},PASSWORD={}
+//             MSGLEVEL=(1,1),TIME=1440,USER={},PASSWORD={}
 //* CLEAN UP
 //CLEANUP EXEC PGM=IDCAMS
 //SYSIN    DD *
