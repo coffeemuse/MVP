@@ -506,7 +506,11 @@ if args.instruction == "WRITE":
     # no spaces allowed in filename or filename path
     # known limitation: the path and filename will always be lowercase
 
-    write_filename = "../" + args.package.split()[0].lower().strip("../")
+    # The MVS/CE folder is normally the parent of the MVP folder, but during
+    # sysgen (or when the MVP folder is a symlink) that is not true, so
+    # MVSCE_ROOT can be set in the environment to say where it is
+    mvsce_root = os.environ.get('MVSCE_ROOT', os.path.dirname(os.getcwd()))
+    write_filename = os.path.join(mvsce_root, args.package.split()[0].lower().strip("../"))
     string_to_write = " ".join(args.package.split()[1:])
 
     # this is such a hack
@@ -514,5 +518,6 @@ if args.instruction == "WRITE":
         string_to_write = "{} {}".format(string_to_write.split()[0]," ".join(string_to_write.split()[1:]).lower())
 
     print("MVP100I - Appending to {} the following: {}".format(write_filename,string_to_write))
+    os.makedirs(os.path.dirname(write_filename), exist_ok=True)
     with open(write_filename, "a+") as outfile:
         outfile.write(string_to_write + "\n")

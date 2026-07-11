@@ -9,9 +9,15 @@
 # - XMI file(s) that make up the release
 #
 # The package XMI is built entirely in Python using the `xmi` library
-# (pip package `xmi-reader`, imported as `import xmi`,
+# (pip package `xmi-reader`>=1.0.5, imported as `import xmi`,
 # https://github.com/mainframed/xmi). No live Hercules/MVS-CE instance is
 # required to run this script -- it works standalone on plain Linux.
+#
+# xmi-reader<1.0.5 has a transport-size bug (INMCOPY LRECL/BLKSIZE
+# hardcoded too small for any PDS member whose last IEBCOPY sub-block is
+# close to a full block) that abends a real RECEIVE/RECV370 with
+# IEC036I 002-18 + SC03 without a local round-trip ever catching it --
+# fixed upstream in xmi-reader 1.0.5, hence the version pin below.
 #
 # Author: Soldier of FORTRAN
 # License: GPLv3
@@ -23,7 +29,15 @@ import tempfile
 import argparse
 from datetime import datetime
 
-import xmi  # pip install xmi-reader
+import xmi  # pip install "xmi-reader>=1.0.5"
+
+if tuple(int(p) for p in xmi.__version__.split('.')[:3]) < (1, 0, 5):
+    raise SystemExit(
+        "xmi-reader {} is too old (need >=1.0.5): pip install --upgrade "
+        "xmi-reader -- older versions hardcode the INMCOPY transport "
+        "LRECL/BLKSIZE too small and can produce a package that abends "
+        "IEC036I 002-18 + SC03 on a real RECEIVE/RECV370, invisibly to "
+        "any local round-trip check.".format(xmi.__version__))
 
 with open("build.log", 'w') as log:
     now = datetime.now()
