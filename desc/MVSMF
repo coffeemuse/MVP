@@ -1,6 +1,6 @@
 Package: MVSMF
 Version: 1.0.0
-Maintainer: Soldier of FORTRAN <mainframed767@gmail.com>
+Maintainer: mgrossmann
 Depends: MINIZIP HTTPD
 Homepage: https://github.com/mvslovers/mvsmf
 Description: z/OSMF REST API for MVS 3.8J

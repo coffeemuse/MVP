@@ -1,6 +1,6 @@
 Package: HTTPD
 Version: 4.0.0
-Maintainer: Soldier of FORTRAN <mainframed767@gmail.com>
+Maintainer: mgrossmann
 Depends: MINIZIP UFSD
 Homepage: https://github.com/mvslovers/httpd
 Description: HTTP Server for MVS 3.8J
