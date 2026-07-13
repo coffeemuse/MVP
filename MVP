@@ -206,7 +206,7 @@ submit_xmi = '''//{:8} JOB (TSO),
 //             'MVP INSTALL',
 //             CLASS=A,
 //             MSGCLASS=A,
-//             MSGLEVEL=(1,1),USER={},PASSWORD={}
+//             MSGLEVEL=(1,1),TIME=1440,USER={},PASSWORD={}
 //* CLEAN UP
 //CLEANUP EXEC PGM=IDCAMS
 //SYSIN    DD *
@@ -233,7 +233,36 @@ submit_xmi = '''//{:8} JOB (TSO),
 //XMITIN   DD DATA,DLM=$$
 '''
 
-def submit(jcl, host="127.0.0.1", port=3505, xmi=False):
+submit_zip = '''//{:8} JOB (TSO),
+//             'MVP INSTALL',
+//             CLASS=A,REGION=0M,
+//             MSGCLASS=A,
+//             MSGLEVEL=(1,1),TIME=1440,USER={},PASSWORD={}
+//* CLEAN UP
+//CLEANUP EXEC PGM=IDCAMS
+//SYSIN    DD *
+  DELETE MVP.WORK SCRATCH PURGE
+  SET MAXCC=0
+  SET LASTCC=0
+//SYSPRINT DD SYSOUT=*
+//* UNLOAD ZIP file to TO MVP.WORK
+//UNZIP EXEC PGM=MINIUNZ,          
+//  PARM='DD:ZIPFILE MVP.WORK'                       
+//STDOUT   DD SYSOUT=*                           
+//SYSPRINT DD SYSOUT=*                           
+//SYSTERM  DD SYSOUT=*                           
+//SYSIN    DD DUMMY                              
+//SYSUT1   DD UNIT=SYSDA,SPACE=(CYL,300),        
+// DCB=(DSORG=PS,RECFM=FB,LRECL=128,BLKSIZE=6144)  
+//* Output dataset
+//UNZIP    DD  DSN=MVP.WORK,DISP=(,CATLG,),
+//             UNIT=SYSDA,VOL=SER=PUB001,
+//             SPACE=(CYL,(10,5,50)),                   
+//             DCB=(DSORG=PO,RECFM=FB,LRECL=80,BLKSIZE=27920)  
+//* In ZIP File
+//ZIPFILE   DD DATA,DLM=$$'''
+
+def submit(jcl, host="127.0.0.1", port=3505, xmi=False, zip=False):
     '''submits a job to hercules reader'''
     
     print("MVP104I - Sending {lines} bytes to {host}:{port} (xmi: {xmi})".format(lines=len(jcl),host=host,port=port,xmi=xmi))
@@ -243,7 +272,7 @@ def submit(jcl, host="127.0.0.1", port=3505, xmi=False):
     try:
         # Connect to server and send data
         sock.connect((host, port))
-        if not xmi:
+        if not xmi and not zip:
             sock.send(jcl.encode())
         else:
             sock.send(jcl)
@@ -443,6 +472,26 @@ if args.instruction == "INSTALL":
                                 host=config['DEFAULT']['hercules_ip'],
                                 port=int(config['DEFAULT']['ebcdic_reader']),
                                 xmi=True)
+                        
+                if package.split()[1] == "ZIP":
+                    t = submit_zip.format(args.package,config['DEFAULT']['user'], config['DEFAULT']['password'])
+
+                    temp = b''
+                    line = "{:80}"
+                    for l in t.splitlines():
+                        long_line = line.format(l)
+                        temp += long_line.encode('cp500')
+
+                    with open("{}/{}".format(config['DEFAULT']['packages'],args.package), 'rb') as zip:
+                        temp += zip.read()
+                    if args.print_only:
+                        print("MVP100I - Printing ZIP packages not supported")
+                    else:
+                        submit(
+                                temp,
+                                host=config['DEFAULT']['hercules_ip'],
+                                port=int(config['DEFAULT']['ebcdic_reader']),
+                                zip=True)
                 break
     if not package_exists:
         print("MVP199E - Could not find {}".format(args.package))
@@ -457,7 +506,11 @@ if args.instruction == "WRITE":
     # no spaces allowed in filename or filename path
     # known limitation: the path and filename will always be lowercase
 
-    write_filename = "../" + args.package.split()[0].lower().strip("../")
+    # The MVS/CE folder is normally the parent of the MVP folder, but during
+    # sysgen (or when the MVP folder is a symlink) that is not true, so
+    # MVSCE_ROOT can be set in the environment to say where it is
+    mvsce_root = os.environ.get('MVSCE_ROOT', os.path.dirname(os.getcwd()))
+    write_filename = os.path.join(mvsce_root, args.package.split()[0].lower().strip("../"))
     string_to_write = " ".join(args.package.split()[1:])
 
     # this is such a hack
@@ -465,5 +518,6 @@ if args.instruction == "WRITE":
         string_to_write = "{} {}".format(string_to_write.split()[0]," ".join(string_to_write.split()[1:]).lower())
 
     print("MVP100I - Appending to {} the following: {}".format(write_filename,string_to_write))
+    os.makedirs(os.path.dirname(write_filename), exist_ok=True)
     with open(write_filename, "a+") as outfile:
         outfile.write(string_to_write + "\n")

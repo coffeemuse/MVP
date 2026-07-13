@@ -375,16 +375,18 @@ the JCL runs first before the REXX.
 The `package_release.py` script in the `extras` folders was designed to make
 packaging XMI file based packages easier.
 
-Before we get started you will need a copy of MVS/CE and make sure no other
-hercules MVS systems are running and python3.
+Before we get started you will need python3 and the `xmi-reader` package
+(`pip3 install xmi-reader`). No copy of MVS/CE or Hercules is required --
+the script builds the package XMI entirely in Python.
 
 `package_release.py` takes multiple arguments:
 
 - `--xmi-files XMI_FILES [XMI_FILES ...]` one (or more) XMI file(s) to include
 - `--task-files TASK_FILES [TASK_FILES ...]` one (or more) JCL/REXX file named `#nnnJCL` or `#nnnREX` where **nnn** is a zero padded number between 001-999. The MVP rexx script will then begin submitting or executing them in numbered order. If there are any conflicts in numbering the JCL runs first before the REXX.
-- `--mvsce` Path to the folder where MVS/CE resides
 - `--name` Name of the output file
-- `--dlm` By default the DLM is `??` but some XMI files may just happen to have this at column zero, use this argument to change it
+- `--dsn` Dataset name to embed in the XMI metadata (defaults to the uppercased output file name)
+- `--from-user` NETDATA origin userid embedded in the XMI (defaults to `MVP`)
+- `--from-node` NETDATA origin node name embedded in the XMI (defaults to `MVP`)
 
 
 
@@ -431,12 +433,8 @@ folder as `i370load.xmi`. From that folder we run the package release tool:
 ```
 python3 /path/to/MVP/extras/package_release.py\
  --xmi-files i370load.xmi --task-files \#001JCL.jcl\
- --mvsce /path/to/MVSCE\
- --name /path/to/MVP/packages/IMON370\
- --dlm '?#'
+ --name /path/to/MVP/packages/IMON370
 ```
-
-For imon370 we must supply the `--dlm` but for most programs you wont need to.
 
 This will generate a file with the following structure:
 
